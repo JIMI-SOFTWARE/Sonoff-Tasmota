@@ -2296,6 +2296,9 @@ void GpioInit()
   else if (SONOFF_B1 == Settings.module) {   // RGBWC led
     light_type = LT_RGBWC;
   }
+  else if (MSDM_DAC == Settings.module) {   // DAC Dimmer
+    light_type = LT_DAC;
+  }
   else {
     if (!light_type) devices_present = 0;
     for (byte i = 0; i < MAX_RELAYS; i++) {

@@ -339,6 +339,31 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
 
 /********************************************************************************************/
 
+void LightDACDuty(uint8_t duty)
+{
+#ifdef USE_I2C
+
+uint16_t output = duty * 16;
+#ifdef TWBR
+  uint8_t twbrback = TWBR;
+  TWBR = ((F_CPU / 400000L) - 16) / 2; // Set I2C frequency to 400kHz
+#endif
+  Wire.beginTransmission(0x60); //address of DAC
+  Wire.write(0x40); //write data to DAC
+  Wire.write(output / 16);                   // Upper data bits          (D11.D10.D9.D8.D7.D6.D5.D4)
+  Wire.write((output % 16) << 4);            // Lower data bits          (D3.D2.D1.D0.x.x.x.x)
+  Wire.endTransmission();
+#ifdef TWBR
+  TWBR = twbrback;
+#endif
+#endif //USE_I2C
+}
+
+
+/********************************************************************************************/
+
+
+
 void LightInit()
 {
   uint8_t max_scheme = LS_MAX -1;
@@ -385,6 +410,9 @@ void LightInit()
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
+  else if (LT_DAC == light_type) {
+
+  }
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -799,6 +827,10 @@ void LightAnimate()
 #endif  // USE_ES2812 ************************************************************************
       if (light_type > LT_WS2812) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
+      }
+
+      if (light_type == LT_DAC) {
+        LightDACDuty(cur_col[0]);
       }
     }
   }
@@ -1279,7 +1311,7 @@ boolean LightCommand()
   if (coldim) {
     LightPreparePower();
   }
-  
+
   return serviced;
 }
 
